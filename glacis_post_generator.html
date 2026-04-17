@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glacis LinkedIn Post Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .header {
+    margin-bottom: 28px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .logo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #1A3C5E;
+  }
+
+  .logo-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1A3C5E;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e6ea;
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  select, textarea, input {
+    font-family: inherit;
+    font-size: 14px;
+    color: #111;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  select:focus, textarea:focus, input:focus {
+    border-color: #1A3C5E;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.5;
+  }
+
+  .api-field {
+    margin-bottom: 16px;
+  }
+
+  .api-note {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+  }
+
+  .api-note a {
+    color: #1A3C5E;
+    text-decoration: none;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .chip {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: #f0f4f8;
+    color: #444;
+    border: 1px solid #dde3ea;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .chip:hover {
+    background: #1A3C5E;
+    color: #fff;
+    border-color: #1A3C5E;
+  }
+
+  .generate-btn {
+    width: 100%;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: #1A3C5E;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  .generate-btn:hover { background: #142f4a; }
+  .generate-btn:active { transform: scale(0.99); }
+  .generate-btn:disabled { background: #8fa8be; cursor: not-allowed; }
+
+  .output-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e6ea;
+    padding: 28px;
+    display: none;
+  }
+
+  .output-card.visible { display: block; }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .output-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .word-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1A3C5E;
+    background: #eef3f8;
+    padding: 3px 10px;
+    border-radius: 99px;
+  }
+
+  .post-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #1a1a1a;
+    white-space: pre-wrap;
+    min-height: 80px;
+  }
+
+  .loading {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #1A3C5E;
+    animation: bounce 1.2s infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  .copy-btn {
+    margin-top: 20px;
+    padding: 9px 20px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1A3C5E;
+    background: #fff;
+    border: 1.5px solid #1A3C5E;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { background: #eef3f8; }
+  .copy-btn.copied { color: #2e7d32; border-color: #2e7d32; background: #f0faf0; }
+
+  .error-msg {
+    font-size: 13px;
+    color: #c62828;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fff5f5;
+    border-radius: 6px;
+    border: 1px solid #ffcdd2;
+    display: none;
+  }
+
+  .divider {
+    height: 1px;
+    background: #eee;
+    margin: 20px 0;
+  }
+
+  @media (max-width: 500px) {
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Glacis</span>
+    </div>
+    <h1>LinkedIn Post Generator</h1>
+    <p class="subtitle">Generates posts in Glacis's exact voice — opinionated, supply chain-focused, written for VP/C-suite audiences.</p>
+  </div>
+
+  <div class="card">
+
+    <!-- API Key -->
+    <div class="field api-field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+      <p class="api-note">Get yours free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Not stored anywhere.</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Post type + Topic -->
+    <div class="form-row">
+      <div class="field">
+        <label>Post type</label>
+        <select id="postType">
+          <option value="insight">Industry insight / POV</option>
+          <option value="mistake">Common mistake + fix</option>
+          <option value="stat">Data-led observation</option>
+          <option value="story">Customer story snippet</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Supply chain area</label>
+        <select id="scArea">
+          <option value="AI agents in supply chain">AI agents in supply chain</option>
+          <option value="procurement">Procurement</option>
+          <option value="logistics / transportation">Logistics / transportation</option>
+          <option value="demand planning">Demand planning</option>
+          <option value="supplier management">Supplier management</option>
+          <option value="ERP / systems integration">ERP / systems integration</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Observation -->
+    <div class="field" style="margin-bottom: 12px;">
+      <label>Your raw observation or pain point</label>
+      <textarea id="painPoint" placeholder="e.g. Most supply chain leaders think buying an AI tool is the same as deploying AI. It's not."></textarea>
+    </div>
+
+    <!-- Example chips -->
+    <div class="chips">
+      <span class="chip" onclick="setPain('Most supply chain leaders think buying an AI tool is the same as deploying AI. It\'s not.')">AI ≠ AI tool</span>
+      <span class="chip" onclick="setPain('Procurement teams are drowning in supplier emails but still making decisions on gut feel.')">Procurement gut feel</span>
+      <span class="chip" onclick="setPain('Companies spend 18 months on ERP rollouts before touching AI. By then, the urgency is gone.')">ERP delay kills AI</span>
+      <span class="chip" onclick="setPain('The supply chains that survived COVID weren\'t the most optimised. They were the most visible.')">Visibility > optimisation</span>
+      <span class="chip" onclick="setPain('Every supply chain leader wants AI. Almost none of them have clean enough data to use it.')">Dirty data problem</span>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button class="generate-btn" id="genBtn" onclick="generatePost()">Generate LinkedIn post</button>
+    </div>
+
+  </div>
+
+  <!-- Output -->
+  <div class="output-card" id="outputCard">
+    <div class="output-header">
+      <span class="output-label">Generated post</span>
+      <span class="word-badge" id="wordBadge"></span>
+    </div>
+    <div class="post-body" id="postBody"></div>
+    <div class="error-msg" id="errorMsg"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyPost()" style="display:none;">Copy post</button>
+  </div>
+
+</div>
+
+<script>
+  function setPain(text) {
+    document.getElementById('painPoint').value = text;
+  }
+
+  function wordCount(text) {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  async function generatePost() {
+    const apiKey   = document.getElementById('apiKey').value.trim();
+    const postType = document.getElementById('postType').value;
+    const scArea   = document.getElementById('scArea').value;
+    const pain     = document.getElementById('painPoint').value.trim();
+
+    const outputCard = document.getElementById('outputCard');
+    const postBody   = document.getElementById('postBody');
+    const errorMsg   = document.getElementById('errorMsg');
+    const copyBtn    = document.getElementById('copyBtn');
+    const wordBadge  = document.getElementById('wordBadge');
+    const genBtn     = document.getElementById('genBtn');
+
+    if (!apiKey) {
+      alert('Please enter your Anthropic API key first.');
+      document.getElementById('apiKey').focus();
+      return;
+    }
+
+    outputCard.classList.add('visible');
+    postBody.innerHTML = '<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    errorMsg.style.display = 'none';
+    copyBtn.style.display = 'none';
+    wordBadge.textContent = '';
+    genBtn.disabled = true;
+    genBtn.textContent = 'Generating...';
+
+    const systemPrompt = `You are a senior B2B content writer for Glacis, an AI-agent startup that automates supply chain workflows for enterprise companies like Nike, Tesla, and Coca-Cola. You write LinkedIn posts for the Glacis founder.
+
+VOICE & STYLE RULES:
+- Open with a sharp, specific hook — a surprising stat, a counterintuitive observation, or a bold claim. First line must stop the scroll.
+- Write in short, punchy sentences. 1–2 sentences per paragraph. No fluff.
+- Use a tight problem → insight → solution structure.
+- Include bullet points or numbered lists for the core content — make it scannable.
+- End with a clear, opinionated takeaway. Not a question. A statement.
+- Tone: direct, confident, slightly contrarian. Like a seasoned operator who has seen it all.
+- Audience: VP of Supply Chain, VP of Procurement, COO at global enterprises.
+- Always close with 2–3 relevant hashtags like #supplychain #AI #logistics.
+- Length: 200–280 words. No more.
+- Do NOT use em-dashes (—). Use colons or line breaks instead.
+- Do NOT start sentences with "I". Lead with the insight.
+
+EXAMPLE of the exact style to match:
+"AI Copilots in Supply Chain: Hit or Miss?
+
+Here's something interesting I learned after talking to supply chain leaders: Almost 30% of them are planning or in the process of implementing an AI copilot with IT leading the implementation.
+
+However, most of these rollouts are falling short of expectations.
+
+Here are the frequent problems:
+- Multiple data sources with missing, outdated, or contradictory information
+- Several siloed ERP systems that don't talk to each other
+- A simultaneous SAP S/4HANA rollout for the next 18 months
+
+The result is predictable: garbage in, garbage out.
+
+My take: a copilot implementation should begin with these criteria:
+- Start narrow: One tightly scoped pilot, jointly defined with Supply Chain teams
+- One data source: Pick an area where information is easy to access
+- Reliable systems: Target functions with mature tooling and minimal cleanup
+- Frequent iterations: Meet twice a month with beta users and improve the pilot
+
+Small scope → quick wins → trust → scale.
+
+That's how #AI actually sticks in #supplychain workflows."
+
+Now write ONE LinkedIn post. Return ONLY the post text, no preamble, no explanation.`;
+
+    const userMsg = `Write a "${postType}" style LinkedIn post about "${scArea}".
+Raw observation to build from: "${pain || 'Create a sharp, realistic insight about ' + scArea + ' that would resonate with VP-level supply chain leaders.'}"
+Make it feel like it came from a founder who talks to supply chain VPs every day.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMsg }]
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'API error');
+      }
+
+      const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+      postBody.textContent = text;
+      wordBadge.textContent = wordCount(text) + ' words';
+      copyBtn.style.display = 'inline-block';
+      copyBtn.textContent = 'Copy post';
+      copyBtn.classList.remove('copied');
+
+    } catch (err) {
+      postBody.textContent = '';
+      errorMsg.textContent = 'Error: ' + err.message + '. Check your API key and try again.';
+      errorMsg.style.display = 'block';
+    }
+
+    genBtn.disabled = false;
+    genBtn.textContent = 'Generate LinkedIn post';
+  }
+
+  function copyPost() {
+    const text = document.getElementById('postBody').textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy post';
+        btn.classList.remove('copied');
+      }, 2500);
+    });
+  }
+
+  // Allow Enter in API key field to trigger generate
+  document.getElementById('apiKey').addEventListener('keydown', e => {
+    if (e.key === 'Enter') generatePost();
+  });
+</script>
+
+</body>
+</html>
